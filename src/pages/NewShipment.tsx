@@ -48,6 +48,34 @@ export default function NewShipment() {
     water: { available: false, time: 'N/A', cost: 'N/A', reason: 'Water not available (no port access)' }
   });
 
+  const [loading, setLoading] = useState(false);
+
+  const handleAnalyze = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/shipments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin,
+          destination,
+          weight,
+          hazardous: shipmentType === 'Heavy' || shipmentType === 'Fragile' // Mock mapping
+        })
+      });
+      const result = await response.json();
+      if (result.status === 'success') {
+        localStorage.setItem('latest_analysis', JSON.stringify(result.data));
+        navigate('/mode-feasibility');
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      alert("Failed to connect to backend. Make sure it is running on port 8000.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Dynamic logic for estimates based on inputs
     const newEstimates = { ...estimates };
@@ -257,12 +285,13 @@ export default function NewShipment() {
 
             <div className="pt-8 flex flex-col sm:flex-row gap-4">
               <button 
-                onClick={() => navigate('/mode-feasibility')}
-                className="flex-grow py-5 px-8 bg-primary text-white rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-3 group"
+                onClick={handleAnalyze}
+                disabled={loading || !origin || !destination}
+                className={`flex-grow py-5 px-8 bg-primary text-white rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-3 group ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <Zap className="w-5 h-5 fill-current" />
-                Analyze Shipment
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <Zap className={loading ? "w-5 h-5 animate-spin" : "w-5 h-5 fill-current"} />
+                {loading ? 'Analyzing...' : 'Analyze Shipment'}
+                {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
               </button>
               <button className="py-5 px-8 bg-gray-100 text-dark rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-all">
                 <BarChart3 className="w-5 h-5" />

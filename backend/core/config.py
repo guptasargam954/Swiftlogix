@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     APP_NAME: str = "Swiftlogix API"
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/swiftlogix"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./swiftlogix.db"
     
     # Mock API Keys
     WEATHER_API_KEY: str = "mock_weather_api_key"

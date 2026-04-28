@@ -1,4 +1,4 @@
-from services.map_service import map_service
+from backend.services.map_service import map_service
 
 class RouteGenerator:
     async def generate_routes(self, origin: str, destination: str):

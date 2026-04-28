@@ -1,12 +1,19 @@
 from fastapi import FastAPI
-from api.routes import router as api_router
+from backend.api.routes import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
+from backend.db.session import engine
+from backend.db.models import Base
 
 app = FastAPI(
     title="Swiftlogix Backend API",
     description="Backend services and engines for logistics and shipment management",
     version="1.0.0",
 )
+
+@app.on_event("startup")
+async def startup_event():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 # Configure CORS for frontend access
 app.add_middleware(

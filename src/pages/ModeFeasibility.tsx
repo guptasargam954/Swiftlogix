@@ -15,8 +15,23 @@ import { useNavigate } from 'react-router-dom';
 
 export default function ModeFeasibility() {
   const navigate = useNavigate();
+  const [analysis, setAnalysis] = React.useState<any>(null);
 
-  const modes = [
+  React.useEffect(() => {
+    const raw = localStorage.getItem('latest_analysis');
+    if (raw) setAnalysis(JSON.parse(raw));
+  }, []);
+
+  const rawModes = analysis ? [analysis.best_route, ...analysis.alternatives] : [];
+  
+  const modes = rawModes.length > 0 ? rawModes.map((rm: any) => ({
+    name: `${rm.mode} Transport`,
+    icon: rm.mode === 'Air' ? Plane : rm.mode === 'Road' ? Truck : Ship,
+    possible: true,
+    reason: `Optimized route detected with a score of ${rm.score}/100.`,
+    distanceFeasibility: `${rm.distance} km total path`,
+    infrastructure: 'Ready'
+  })) : [
     { 
       name: 'Air Transport', 
       icon: Plane, 
@@ -121,15 +136,24 @@ export default function ModeFeasibility() {
               Live Route Map
             </h4>
             <div className="aspect-square bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
-              {/* Mock Map UI */}
               <div className="absolute inset-0 opacity-20">
                 <div className="w-full h-full border-r border-b border-white/10 grid grid-cols-8 grid-rows-8">
                    {Array.from({length: 64}).map((_, i) => <div key={i} className="border-t border-l border-white/5"></div>)}
                 </div>
               </div>
-              <div className="relative text-center p-6 space-y-4">
-                <div className="w-3 h-3 bg-primary rounded-full mx-auto animate-ping"></div>
-                <p className="text-xs text-gray-400 font-medium">Scanning local infrastructure at coordinates: 52.52, 13.40 (Berlin)...</p>
+              <div className="relative text-center p-6 space-y-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-ping"></div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">{analysis?.origin || 'Origin'}</span>
+                </div>
+                <div className="h-16 w-[1px] bg-gradient-to-b from-primary to-transparent mx-auto"></div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">{analysis?.destination || 'Destination'}</span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-medium max-w-[150px] mx-auto">
+                  Calculating {analysis?.best_route?.mode || 'optimal'} path logic for {analysis?.origin} to {analysis?.destination}.
+                </p>
               </div>
             </div>
             <p className="mt-6 text-[10px] text-gray-500 uppercase tracking-[0.2em] leading-relaxed">
@@ -143,7 +167,9 @@ export default function ModeFeasibility() {
               <h4 className="font-bold">Smart Insight</h4>
             </div>
             <p className="text-sm text-primary/80 font-medium leading-relaxed">
-              Land transport is currently the most robust option for your continental route (Berlin to Hamburg). Water is disabled as your specific origin zip-code lacks Barge access.
+              {analysis?.best_route 
+                ? `${analysis.best_route.mode} transport is currently the most robust option for your route from ${analysis.origin} to ${analysis.destination}. It offers a reliability of ${analysis.best_route.reliability}% and the best cost-to-time ratio.`
+                : 'Enter shipment details to receive a smart logistics insight based on real-time weather and infrastructure data.'}
             </p>
           </div>
         </aside>

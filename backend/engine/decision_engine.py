@@ -1,4 +1,4 @@
-from services.weather_service import weather_service
+from backend.services.weather_service import weather_service
 
 class DecisionEngine:
     async def rank_routes(self, routes: list, origin: str):
@@ -21,6 +21,19 @@ class DecisionEngine:
                 elif route["mode"] == "Road":
                     base_score *= 0.9 # 10% penalty for road
                 
+            # Risk and Reliability logic
+            if route["mode"] == "Air":
+                risk_score = 2 if weather_info["condition"] == "Clear" else 5
+                reliability = 98 if weather_info["condition"] == "Clear" else 85
+            elif route["mode"] == "Road":
+                risk_score = 4 if weather_info["condition"] == "Clear" else 7
+                reliability = 85 if weather_info["condition"] == "Clear" else 70
+            else: # Rail/Water
+                risk_score = 1
+                reliability = 92
+                
+            route["risk_score"] = risk_score
+            route["reliability"] = reliability
             route["score"] = round(base_score, 1)
             
         # Sort by score descending

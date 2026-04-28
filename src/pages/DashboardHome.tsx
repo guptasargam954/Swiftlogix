@@ -21,6 +21,8 @@ import {
   Line
 } from 'recharts';
 
+import { useNavigate } from 'react-router-dom';
+
 const data = [
   { name: 'Mon', shipments: 40, cost: 2400 },
   { name: 'Tue', shipments: 30, cost: 1398 },
@@ -32,11 +34,34 @@ const data = [
 ];
 
 export default function DashboardHome() {
+  const navigate = useNavigate();
+  const [shipments, setShipments] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch('http://localhost:8000/api/shipments')
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success' && result.data.length > 0) {
+          setShipments(result.data);
+        }
+      })
+      .catch(err => console.error("Dashboard Fetch Error:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
   const stats = [
     { label: 'Active Shipments', value: '1,284', change: '+12.5%', icon: Package, trend: 'up' },
     { label: 'Delayed Shipments', value: '14', change: '-2.4%', icon: AlertTriangle, trend: 'down', color: 'text-amber-500' },
     { label: 'Completed Today', value: '452', change: '+8.1%', icon: CheckCircle2, trend: 'up', color: 'text-green-500' },
     { label: 'Avg. Delivery Time', value: '2.4 Days', change: '-4.2%', icon: Clock, trend: 'down' },
+  ];
+
+  const displayShipments = shipments.length > 0 ? shipments : [
+    { id: 'SW-9821', origin: 'Berlin', destination: 'Amazon Wh', status: 'In Transit', best_mode: 'Land', estimated_cost: '$4,290' },
+    { id: 'SW-9822', origin: 'Hamburg', destination: 'LogiLink', status: 'Delivered', best_mode: 'Air', estimated_cost: '$12,400' },
+    { id: 'SW-9823', origin: 'Munich', destination: 'Berlin Ex', status: 'Processing', best_mode: 'Rail', estimated_cost: '$850' },
+    { id: 'SW-9824', origin: 'Cologne', destination: 'TechPort', status: 'In Transit', best_mode: 'Land', estimated_cost: '$3,100' },
   ];
 
   return (
@@ -47,10 +72,16 @@ export default function DashboardHome() {
           <p className="text-gray-500">Welcome back, John. Here's what's happening today.</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="px-6 py-3 bg-white border border-gray-100 rounded-2xl font-bold text-sm hover:bg-gray-50 transition-all">
+          <button 
+            onClick={() => alert("Generating supply chain report... Your PDF will be ready in a moment.")}
+            className="px-6 py-3 bg-white border border-gray-100 rounded-2xl font-bold text-sm hover:bg-gray-50 transition-all"
+          >
             Export Report
           </button>
-          <button className="px-6 py-3 bg-primary text-white rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all">
+          <button 
+            onClick={() => navigate('/new-shipment')}
+            className="px-6 py-3 bg-primary text-white rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all"
+          >
             New Shipment
           </button>
         </div>
@@ -177,15 +208,10 @@ export default function DashboardHome() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {[
-                { id: 'SW-9821', user: 'Amazon Warehouse', status: 'In Transit', eta: 'Tommorow', value: '$4,290' },
-                { id: 'SW-9822', user: 'LogiLink Corp', status: 'Delivered', eta: 'Completed', value: '$12,400' },
-                { id: 'SW-9823', user: 'Berlin Express', status: 'Processing', eta: '2 Days', value: '$850' },
-                { id: 'SW-9824', user: 'TechPort Inc', status: 'In Transit', eta: 'Today', value: '$3,100' },
-              ].map((row) => (
+              {displayShipments.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-8 py-6 font-bold">{row.id}</td>
-                  <td className="px-8 py-6 text-gray-600">{row.user}</td>
+                  <td className="px-8 py-6 font-bold">{typeof row.id === 'number' ? `SL-${1000 + row.id}` : row.id}</td>
+                  <td className="px-8 py-6 text-gray-600">{row.origin} → {row.destination}</td>
                   <td className="px-8 py-6">
                     <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${
                       row.status === 'Delivered' 
@@ -197,8 +223,8 @@ export default function DashboardHome() {
                       {row.status}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-gray-500">{row.eta}</td>
-                  <td className="px-8 py-6 font-bold opacity-70">{row.value}</td>
+                  <td className="px-8 py-6 text-gray-500">{row.best_mode || 'N/A'}</td>
+                  <td className="px-8 py-6 font-bold opacity-70">${row.estimated_cost || 0}</td>
                 </tr>
               ))}
             </tbody>

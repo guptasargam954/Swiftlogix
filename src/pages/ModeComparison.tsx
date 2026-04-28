@@ -18,14 +18,37 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 
 export default function ModeComparison() {
   const navigate = useNavigate();
+  const [analysis, setAnalysis] = React.useState<any>(null);
 
-  const data = [
+  React.useEffect(() => {
+    const raw = localStorage.getItem('latest_analysis');
+    if (raw) setAnalysis(JSON.parse(raw));
+  }, []);
+
+  const rawModes = analysis ? [analysis.best_route, ...analysis.alternatives] : [];
+
+  const data = rawModes.length > 0 ? rawModes.map((rm: any) => ({
+    name: rm.mode,
+    cost: rm.cost,
+    time: rm.duration,
+    risk: rm.risk_score * 10,
+    delayTitle: rm.mode === 'Air' ? 'Weather' : 'Traffic'
+  })) : [
     { name: 'Air', cost: 12000, time: 5, risk: 25, delayTitle: 'Weather' },
     { name: 'Land', cost: 4500, time: 20, risk: 15, delayTitle: 'Traffic' },
     { name: 'Water', cost: 2100, time: 144, risk: 5, delayTitle: 'Port Congestion' },
   ];
 
-  const modes = [
+  const modes = rawModes.length > 0 ? rawModes.map((rm: any) => ({
+    name: `${rm.mode} Transport`,
+    icon: rm.mode === 'Air' ? Plane : rm.mode === 'Road' ? Truck : Ship,
+    time: `${rm.duration}h`,
+    cost: `$${(rm.cost/1000).toFixed(1)}k`,
+    risk: rm.risk_score > 6 ? 'High' : rm.risk_score > 3 ? 'Medium' : 'Low',
+    reliability: rm.reliability,
+    riskScore: rm.risk_score,
+    color: rm.mode === 'Air' ? '#FF5733' : rm.mode === 'Road' ? '#33FF57' : '#3357FF'
+  })) : [
     { 
       name: 'Air Transport', 
       icon: Plane, 
