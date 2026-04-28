@@ -70,9 +70,10 @@ export default function NewShipment() {
         localStorage.setItem('latest_analysis', JSON.stringify(result.data));
         navigate('/mode-feasibility');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("API Error:", error);
-      alert("Failed to connect to backend. Make sure it is running on port 8000.");
+      const isLocal = window.location.hostname === 'localhost';
+      alert(`Backend Connection Error: ${error.message || 'Unknown error'}. ${isLocal ? 'Ensure your local backend is running on port 8000.' : 'Please check the Vercel logs for function crashes.'}`);
     } finally {
       setLoading(false);
     }
