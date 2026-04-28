@@ -50,10 +50,12 @@ export default function NewShipment() {
 
   const [loading, setLoading] = useState(false);
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const handleAnalyze = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/shipments', {
+      const response = await fetch(`${API_BASE_URL}/api/shipments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

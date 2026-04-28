@@ -38,8 +38,10 @@ export default function DashboardHome() {
   const [shipments, setShipments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   React.useEffect(() => {
-    fetch('http://localhost:8000/api/shipments')
+    fetch(`${API_BASE_URL}/api/shipments`)
       .then(res => res.json())
       .then(result => {
         if (result.status === 'success' && result.data.length > 0) {
